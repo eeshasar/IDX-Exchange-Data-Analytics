@@ -18,7 +18,6 @@ import os
 folder = '/Users/eeshasaraswat/Downloads/IDX Exchange Internship'
 sold = pd.read_csv(os.path.join(folder, 'sold_combined_residential.csv'), low_memory=False)
 
-# Structure
 print("Columns:", sold.columns.tolist())
 print(sold.head())
 print(f"Shape: {sold.shape[0]:,} rows, {sold.shape[1]} columns")
