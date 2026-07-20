@@ -10,9 +10,6 @@
 # Results:
 # Sold: 412,131 rows, 71 columns before -> 83 columns after
 # Listings: 574,969 rows, 62 columns before -> 74 columns after
-# Sold invalid_close_price_flag count: 1
-# Sold negative_timeline_flag count: 509
-# Listings missing_coords_flag count: 76564
  
 import pandas as pd
  
@@ -135,70 +132,9 @@ for df, name in [(sold, "sold"), (listings, "listings")]:
  
 # Step 6: date consistency checks
  
-print("\nDate consistency flags")
- 
-for df, name in [(sold, "sold"), (listings, "listings")]:
-    has_listing = "ListingContractDate" in df.columns
-    has_purchase = "PurchaseContractDate" in df.columns
-    has_close = "CloseDate" in df.columns
- 
-    # listing_after_close_flag: ListingContractDate should precede CloseDate
-    if has_listing and has_close:
-        df["listing_after_close_flag"] = df["ListingContractDate"] > df["CloseDate"]
-        print(f"  [{name}] listing_after_close_flag: {df['listing_after_close_flag'].sum()} rows")
-    else:
-        print(f"  [{name}] listing_after_close_flag: skipped, missing required date column(s)")
- 
-    # purchase_after_close_flag: PurchaseContractDate should precede CloseDate
-    if has_purchase and has_close:
-        df["purchase_after_close_flag"] = df["PurchaseContractDate"] > df["CloseDate"]
-        print(f"  [{name}] purchase_after_close_flag: {df['purchase_after_close_flag'].sum()} rows")
-    else:
-        print(f"  [{name}] purchase_after_close_flag: skipped, missing required date column(s)")
- 
-    # negative_timeline_flag: full order should be Listing -> Purchase -> Close
-    if has_listing and has_purchase and has_close:
-        df["negative_timeline_flag"] = (
-            (df["ListingContractDate"] > df["PurchaseContractDate"])
-            | (df["PurchaseContractDate"] > df["CloseDate"])
-            | (df["ListingContractDate"] > df["CloseDate"])
-        )
-        print(f"  [{name}] negative_timeline_flag: {df['negative_timeline_flag'].sum()} rows")
-    else:
-        print(f"  [{name}] negative_timeline_flag: skipped, missing required date column(s)")
  
 # Step 7: geographic data checks
  
-print("\nGeographic data quality summary")
- 
-for df, name in [(sold, "sold"), (listings, "listings")]:
-    has_lat = "Latitude" in df.columns
-    has_lon = "Longitude" in df.columns
- 
-    if not (has_lat and has_lon):
-        print(f"  [{name}] Latitude/Longitude not present in this dataset, geo checks skipped")
-        continue
- 
-    df["missing_coords_flag"] = df["Latitude"].isnull() | df["Longitude"].isnull()
-    df["zero_coord_flag"] = (df["Latitude"] == 0) | (df["Longitude"] == 0)
-    df["invalid_longitude_sign_flag"] = df["Longitude"] > 0  # CA longitude should be negative
- 
-    # Rough California bounding box for plausibility check
-    # (lat approx 32.5 to 42.0, lon approx -124.5 to -114.0)
-    df["implausible_coord_flag"] = (
-        df["Latitude"].notnull()
-        & df["Longitude"].notnull()
-        & (
-            (df["Latitude"] < 32.5) | (df["Latitude"] > 42.0)
-            | (df["Longitude"] < -124.5) | (df["Longitude"] > -114.0)
-        )
-    )
- 
-    print(f"  [{name}]")
-    print(f"    missing_coords_flag: {df['missing_coords_flag'].sum()} rows")
-    print(f"    zero_coord_flag: {df['zero_coord_flag'].sum()} rows")
-    print(f"    invalid_longitude_sign_flag: {df['invalid_longitude_sign_flag'].sum()} rows")
-    print(f"    implausible_coord_flag (outside CA bounding box): {df['implausible_coord_flag'].sum()} rows")
  
 # Save cleaned datasets
  
