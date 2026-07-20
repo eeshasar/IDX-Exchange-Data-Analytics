@@ -6,10 +6,7 @@
 # numeric fields are properly typed, flags (does not delete) invalid numeric
 # values, flags date consistency violations, and flags geographic data
 # quality issues.
-#
-# Results:
-# Sold: 412,131 rows, 71 columns before -> 83 columns after
-# Listings: 574,969 rows, 62 columns before -> 74 columns after
+
  
 import pandas as pd
  
@@ -45,14 +42,11 @@ for df, name in [(sold, "sold"), (listings, "listings")]:
         else:
             print(f"  [{name}] {field}: not present in dataset, skipped")
  
-# Step 2: check for redundant columns
-# High-null columns were already dropped in Week 2 (>90% threshold).
-# Here we check for columns that are fully constant (same value in every row),
-# since those add no analytical value and are safe to flag as redundant.
-# We do not auto-drop these, just report them for review.
- 
+# Step 2: check for redundant columns and drop 
+# Drops columns where every row has the same value
+
 print("\nRedundant column check (constant-value columns)")
- 
+
 for df, name in [(sold, "sold"), (listings, "listings")]:
     constant_cols = [col for col in df.columns if df[col].nunique(dropna=False) <= 1]
     if constant_cols:
@@ -92,9 +86,7 @@ for df, name in [(sold, "sold"), (listings, "listings")]:
             print(f"  [{name}] {field}: not present in dataset, skipped")
  
 # Step 4: handle missing values in retained fields
-# We keep core fields even if partially missing (per Week 2-3 guidance).
-# Rather than dropping or guessing values, we document how much is missing
-# so downstream analysis can decide whether to exclude rows per-metric.
+# Documents % missing per field rather than dropping or guessing values
  
 print("\nMissing value summary for core numeric fields (retained, not modified)")
  
@@ -105,7 +97,7 @@ for df, name in [(sold, "sold"), (listings, "listings")]:
             pct_missing = df[field].isnull().mean() * 100
             print(f"    {field}: {pct_missing:.2f}% missing")
  
-# Step 5: flag invalid numeric values (do not delete)
+# Step 5: flag invalid numeric values
  
 print("\nInvalid numeric value flags")
  
